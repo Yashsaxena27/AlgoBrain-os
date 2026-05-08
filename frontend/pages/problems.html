@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AlgoBrainOS — Problems</title>
+  <link rel="stylesheet" href="../assets/css/style.css"/>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="nav-brand" href="../index.html">🧠 Algo<span>Brain</span>OS</a>
+  <div class="nav-links">
+    <a href="../index.html">Dashboard</a>
+    <a href="log.html">Log Problem</a>
+    <a href="problems.html" class="active">Problems</a>
+    <a href="recommendations.html">Brain Insights</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="page-header">
+    <h1>Problem <span>Archive</span></h1>
+    <p>Your complete history — click any problem for full AI analysis</p>
+  </div>
+
+  <div class="filter-bar">
+    <input type="text" id="searchInput" placeholder="🔍 Search problems..." oninput="filterProblems()"/>
+    <select id="filterDiff" onchange="filterProblems()">
+      <option value="">All Difficulties</option>
+      <option>Easy</option>
+      <option>Medium</option>
+      <option>Hard</option>
+    </select>
+    <select id="filterStatus" onchange="filterProblems()">
+      <option value="">All Status</option>
+      <option>Solved</option>
+      <option>Attempted</option>
+      <option>Need Revision</option>
+    </select>
+    <span id="countBadge" style="font-size:0.8rem;color:var(--muted);white-space:nowrap"></span>
+  </div>
+
+  <div id="problemsList"><div class="loading-overlay"><span class="spinner"></span> Loading problems...</div></div>
+</div>
+
+<!-- Problem Detail Modal -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">—</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script src="../assets/js/api.js"></script>
+<script>
+let allProblems = [];
+
+async function loadProblems() {
+  try {
+    const data = await api.get('/problems');
+    allProblems = data.problems || [];
+    renderProblems(allProblems);
+  } catch (err) {
+    document.getElementById('problemsList').innerHTML = '<div class="empty-state"><div class="icon">❌</div><h3>Cannot connect to backend</h3><p>Is the server running on port 5000?</p></div>';
+  }
+}
+
+function renderProblems(problems) {
+  const el = document.getElementById('problemsList');
+  document.getElementById('countBadge').textContent = `${problems.length} problem${problems.length !== 1 ? 's' : ''}`;
+
+  if (problems.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><h3>No problems found</h3><p><a href="log.html" style="color:var(--accent)">Log your first problem →</a></p></div>';
+    return;
+  }
+
+  el.innerHTML = '<div class="problem-list">' + problems.map((p, i) => `
+    <div class="problem-card" style="animation-delay:${i*0.05}s" onclick="openDetail('${p._id}')">
+      <div style="flex:1">
+        <div class="problem-title">${p.title}</div>
+        <div class="problem-meta">
+          <span class="tag tag-${getDiffClass(p.difficulty)}">${p.difficulty}</span>
+          <span class="tag tag-${getStatusClass(p.status)}">${p.status}</span>
+          ${(p.aiTags?.topics||[]).slice(0,2).map(t=>`<span class="tag tag-topic">${t}</span>`).join('')}
+          ${p.aiTags?.pattern ? `<span class="tag tag-pattern">${p.aiTags.pattern}</span>` : ''}
+          ${p.platform !== 'LeetCode' ? `<span class="tag" style="background:rgba(255,255,255,0.05);color:var(--muted)">${p.platform}</span>` : ''}
+        </div>
+      </div>
+      <div class="problem-card-right">
+        <span class="problem-date">${formatDate(p.createdAt)}</span>
+        ${p.timeToSolve ? `<span style="font-size:0.75rem;color:var(--muted);font-family:'Space Mono',monospace">${p.timeToSolve}m</span>` : ''}
+      </div>
+    </div>`).join('') + '</div>';
+}
+
+function filterProblems() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const diff = document.getElementById('filterDiff').value;
+  const status = document.getElementById('filterStatus').value;
+
+  const filtered = allProblems.filter(p => {
+    const matchSearch = !search || p.title.toLowerCase().includes(search) ||
+      (p.aiTags?.topics||[]).some(t => t.toLowerCase().includes(search)) ||
+      (p.aiTags?.pattern||'').toLowerCase().includes(search);
+    const matchDiff = !diff || p.difficulty === diff;
+    const matchStatus = !status || p.status === status;
+    return matchSearch && matchDiff && matchStatus;
+  });
+
+  renderProblems(filtered);
+}
+
+async function openDetail(id) {
+  const problem = allProblems.find(p => p._id === id);
+  if (!problem) return;
+
+  const ai = problem.aiTags || {};
+  document.getElementById('modalTitle').textContent = problem.title;
+  document.getElementById('modalBody').innerHTML = `
+    <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1.2rem">
+      <span class="tag tag-${getDiffClass(problem.difficulty)}">${problem.difficulty}</span>
+      <span class="tag tag-${getStatusClass(problem.status)}">${problem.status}</span>
+      ${(ai.topics||[]).map(t=>`<span class="tag tag-topic">${t}</span>`).join('')}
+      ${ai.pattern ? `<span class="tag tag-pattern">${ai.pattern}</span>` : ''}
+      <span style="margin-left:auto;font-size:0.8rem;color:var(--muted);font-family:'Space Mono',monospace">${formatDate(problem.createdAt)}</span>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-label">My Approach</div>
+      <div class="detail-content">${problem.approach}</div>
+    </div>
+
+    ${problem.mistakes ? `<div class="detail-section">
+      <div class="detail-label">Mistakes Made</div>
+      <div class="detail-content" style="border-left:3px solid var(--hard)">${problem.mistakes}</div>
+    </div>` : ''}
+
+    ${problem.solution ? `<div class="detail-section">
+      <div class="detail-label">Solution / Key Insight</div>
+      <div class="detail-content" style="border-left:3px solid var(--easy)">${problem.solution}</div>
+    </div>` : ''}
+
+    <div class="ai-block">
+      <div class="ai-block-title">🤖 AI Analysis</div>
+      <div class="ai-analysis-text">${ai.analysis || 'No analysis available'}</div>
+
+      ${(ai.mistakeTypes||[]).length > 0 ? `
+        <div style="margin-bottom:0.8rem">
+          <div class="detail-label" style="margin-bottom:0.4rem">Mistake Types</div>
+          <div style="display:flex;flex-wrap:wrap;gap:0.4rem">${ai.mistakeTypes.map(m=>`<span class="tag tag-mistake">${m}</span>`).join('')}</div>
+        </div>` : ''}
+
+      ${(ai.strengthPoints||[]).length > 0 ? `
+        <div style="margin-bottom:0.8rem">
+          <div class="detail-label" style="margin-bottom:0.4rem">✅ Strengths</div>
+          ${ai.strengthPoints.map(s=>`<div style="font-size:0.85rem;color:var(--easy);margin-bottom:0.2rem">• ${s}</div>`).join('')}
+        </div>` : ''}
+
+      ${(ai.improvementTips||[]).length > 0 ? `
+        <div>
+          <div class="detail-label" style="margin-bottom:0.4rem">💡 Tips</div>
+          ${ai.improvementTips.map(t=>`<div style="font-size:0.85rem;margin-bottom:0.2rem">• ${t}</div>`).join('')}
+        </div>` : ''}
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;margin-top:1.5rem">
+      <button class="btn btn-danger" onclick="deleteProblem('${problem._id}')">🗑 Delete</button>
+    </div>`;
+
+  document.getElementById('detailModal').classList.add('show');
+}
+
+async function deleteProblem(id) {
+  if (!confirm('Delete this problem?')) return;
+  const data = await api.delete('/problems/' + id);
+  if (data.success) {
+    showToast('Problem deleted', 'success');
+    closeModal();
+    allProblems = allProblems.filter(p => p._id !== id);
+    renderProblems(allProblems);
+  }
+}
+
+function closeModal() {
+  document.getElementById('detailModal').classList.remove('show');
+}
+
+document.getElementById('detailModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+loadProblems();
+</script>
+</body>
+</html>

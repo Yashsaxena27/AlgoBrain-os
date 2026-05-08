@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AlgoBrainOS — Brain Insights</title>
+  <link rel="stylesheet" href="../assets/css/style.css"/>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="nav-brand" href="../index.html">🧠 Algo<span>Brain</span>OS</a>
+  <div class="nav-links">
+    <a href="../index.html">Dashboard</a>
+    <a href="log.html">Log Problem</a>
+    <a href="problems.html">Problems</a>
+    <a href="recommendations.html" class="active">Brain Insights</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="page-header">
+    <h1><span>Brain</span> Insights</h1>
+    <p>AI-generated recommendations based on your weakness patterns</p>
+  </div>
+
+  <div id="insightsContent"><div class="loading-overlay"><span class="spinner"></span> AI is analyzing your patterns...</div></div>
+</div>
+
+<script src="../assets/js/api.js"></script>
+<script>
+async function loadRecommendations() {
+  try {
+    const [recData, dashData] = await Promise.all([
+      api.get('/recommendations'),
+      api.get('/dashboard')
+    ]);
+
+    const el = document.getElementById('insightsContent');
+    const recs = recData.recommendations || [];
+    const stats = dashData.stats || {};
+
+    if (recData.message) {
+      el.innerHTML = `<div class="empty-state">
+        <div class="icon">🧠</div>
+        <h3>${recData.message}</h3>
+        <p><a href="log.html" style="color:var(--accent)">Log your first problem →</a></p>
+      </div>`;
+      return;
+    }
+
+    let html = '';
+
+    // Weak Topics Banner
+    if (recData.weakTopics?.length > 0) {
+      html += `<div class="card" style="margin-bottom:1.5rem;border-color:var(--accent2);background:linear-gradient(135deg,rgba(255,106,158,0.05),rgba(124,106,255,0.05))">
+        <div class="ai-block-title" style="color:var(--accent2)">⚠️ Your Weak Spots</div>
+        <div style="font-size:0.9rem;color:var(--text);margin-bottom:0.8rem">Based on your mistake patterns, these topics need the most attention:</div>
+        <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
+          ${recData.weakTopics.map(t=>`<span class="tag tag-mistake" style="font-size:0.85rem;padding:0.3rem 0.9rem">${t}</span>`).join('')}
+        </div>
+      </div>`;
+    }
+
+    // Recommendations
+    recs.forEach(rec => {
+      if (rec.type === 'Weak Topic Practice' && rec.suggestedProblems?.length > 0) {
+        html += `<div class="rec-card" style="border-left-color:var(--accent2)">
+          <h4>🎯 ${rec.type}</h4>
+          <p>${rec.reason}</p>
+          <div class="rec-items">
+            ${rec.suggestedProblems.map(p=>`<span class="tag tag-topic" style="font-size:0.8rem">${p}</span>`).join('')}
+          </div>
+        </div>`;
+      }
+
+      if (rec.type === 'Revision Needed' && rec.problems?.length > 0) {
+        html += `<div class="rec-card" style="border-left-color:var(--medium)">
+          <h4>🔄 ${rec.type}</h4>
+          <p>${rec.reason}</p>
+          <div class="rec-items">
+            ${rec.problems.map(p=>`<a href="problems.html" style="text-decoration:none"><span class="tag tag-attempted" style="font-size:0.8rem;cursor:pointer">${p.title}</span></a>`).join('')}
+          </div>
+        </div>`;
+      }
+
+      if (rec.type === 'Pattern Mastery' && rec.nextPatterns?.length > 0) {
+        html += `<div class="rec-card" style="border-left-color:var(--accent3)">
+          <h4>🧩 ${rec.type}</h4>
+          <p>${rec.reason}</p>
+          <div class="rec-items">
+            ${rec.nextPatterns.map(p=>`<span class="tag tag-pattern" style="font-size:0.8rem">${p}</span>`).join('')}
+          </div>
+        </div>`;
+      }
+    });
+
+    // Mistake DNA Summary
+    if (stats.mistakeDNA?.length > 0) {
+      html += `<div class="card" style="margin-top:1.5rem">
+        <div class="section-title">🧬 Your Mistake DNA — Full Breakdown</div>
+        ${stats.mistakeDNA.map(m => `
+          <div class="dna-row">
+            <span>${m.name}</span>
+            <div class="dna-bar-wrap"><div class="dna-bar" style="width:${m.percentage}%"></div></div>
+            <span class="dna-pct">${m.count} times (${m.percentage}%)</span>
+          </div>`).join('')}
+      </div>`;
+    }
+
+    // Difficulty heatmap
+    const diff = stats.difficultyDistribution || {};
+    const total = (diff.Easy||0) + (diff.Medium||0) + (diff.Hard||0);
+    if (total > 0) {
+      html += `<div class="card" style="margin-top:1.5rem">
+        <div class="section-title">📊 Difficulty Distribution</div>
+        <div class="three-col" style="text-align:center;padding:1rem 0">
+          <div>
+            <div style="font-size:2rem;font-weight:800;color:var(--easy)">${diff.Easy||0}</div>
+            <div style="font-size:0.8rem;color:var(--muted)">EASY</div>
+          </div>
+          <div>
+            <div style="font-size:2rem;font-weight:800;color:var(--medium)">${diff.Medium||0}</div>
+            <div style="font-size:0.8rem;color:var(--muted)">MEDIUM</div>
+          </div>
+          <div>
+            <div style="font-size:2rem;font-weight:800;color:var(--hard)">${diff.Hard||0}</div>
+            <div style="font-size:0.8rem;color:var(--muted)">HARD</div>
+          </div>
+        </div>
+        <div class="progress-track" style="height:10px">
+          <div style="height:100%;display:flex">
+            <div style="width:${total>0?(diff.Easy/total*100):0}%;background:var(--easy);transition:width 1s"></div>
+            <div style="width:${total>0?(diff.Medium/total*100):0}%;background:var(--medium);transition:width 1s"></div>
+            <div style="width:${total>0?(diff.Hard/total*100):0}%;background:var(--hard);transition:width 1s"></div>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    el.innerHTML = html || '<div class="empty-state"><div class="icon">📭</div><h3>Log more problems to unlock insights</h3></div>';
+
+  } catch (err) {
+    document.getElementById('insightsContent').innerHTML = '<div class="empty-state"><div class="icon">❌</div><h3>Cannot connect to backend</h3><p>Make sure server is running on port 5000</p></div>';
+    console.error(err);
+  }
+}
+
+loadRecommendations();
+</script>
+</body>
+</html>
