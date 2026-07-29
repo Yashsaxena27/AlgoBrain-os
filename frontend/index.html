@@ -1,105 +1,19 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AlgoBrainOS — DSA Learning OS</title>
-  <link rel="stylesheet" href="css/style.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
-</head>
-<body>
-  <div class="os-shell">
-    <!-- Sidebar Nav -->
-    <nav class="sidebar">
-      <div class="brand">
-        <span class="brand-icon">🧠</span>
-        <div>
-          <div class="brand-name">AlgoBrainOS</div>
-          <div class="brand-sub">DSA Intelligence Layer</div>
-        </div>
-      </div>
-      <ul class="nav-links">
-        <li><a href="index.html" class="nav-link active" data-page="log">
-          <span class="nav-icon">⚡</span> Log Problem
-        </a></li>
-        <li><a href="dashboard.html" class="nav-link" data-page="dash">
-          <span class="nav-icon">📊</span> Dashboard
-        </a></li>
-        <li><a href="history.html" class="nav-link" data-page="hist">
-          <span class="nav-icon">🗂️</span> Problem History
-        </a></li>
-      </ul>
-      <div class="sidebar-footer">v1.0 · Phase 1 MVP</div>
-    </nav>
-
-    <!-- Main Content -->
-    <main class="main-content">
-      <div class="page-header">
-        <h1 class="page-title">Log a Problem</h1>
-        <p class="page-sub">Document your approach → AI analyses your thinking pattern</p>
-      </div>
-
-      <form id="problemForm" class="problem-form">
-        <div class="form-grid">
-          <div class="field">
-            <label>Problem Name *</label>
-            <input type="text" id="name" placeholder="e.g. Two Sum, Binary Search..." required />
-          </div>
-          <div class="field">
-            <label>Platform</label>
-            <select id="platform">
-              <option>LeetCode</option>
-              <option>CodeForces</option>
-              <option>GeeksForGeeks</option>
-              <option>HackerRank</option>
-              <option>Other</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Difficulty</label>
-            <select id="difficulty">
-              <option>Easy</option>
-              <option selected>Medium</option>
-              <option>Hard</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Time Taken (minutes)</label>
-            <input type="number" id="timeTaken" placeholder="e.g. 30" min="1" />
-          </div>
-        </div>
-
-        <div class="field full">
-          <label>Your Approach *</label>
-          <textarea id="approach" rows="5" placeholder="Describe how you thought about the problem. What data structure? What algorithm? What was your step-by-step plan?" required></textarea>
-        </div>
-
-        <div class="field full">
-          <label>Mistakes Made</label>
-          <textarea id="mistakes" rows="3" placeholder="What went wrong? Where did you get stuck? Off-by-one? Wrong condition? Missed edge case?"></textarea>
-        </div>
-
-        <div class="field full">
-          <label>Solution / Key Insight</label>
-          <textarea id="solution" rows="3" placeholder="What was the final solution? What's the key insight you'd want to remember?"></textarea>
-        </div>
-
-        <button type="submit" class="submit-btn" id="submitBtn">
-          <span id="btnText">⚡ Analyze & Log Problem</span>
-          <span id="btnLoader" class="hidden">🤖 AI Analyzing...</span>
-        </button>
-      </form>
-
-      <div id="successCard" class="success-card hidden">
-        <div class="success-header">✅ Problem Logged & Analyzed!</div>
-        <div id="aiResult" class="ai-result"></div>
-        <button onclick="resetForm()" class="reset-btn">Log Another Problem →</button>
-      </div>
-    </main>
-  </div>
-
-  <script src="js/api.js"></script>
-  <script src="js/log.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AlgoBrainOS — Personal Engineering Career OS</title>
+    <meta name="description" content="AlgoBrainOS is the personal engineering career operating system that tracks DSA mastery, memory decay, mistake patterns, and company readiness." />
+    
+    <!-- Google Fonts: Outfit (Display), Inter (Body), JetBrains Mono (Data/Code) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

@@ -1,0 +1,154 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Default Soothing Light Mode Theme Tokens */
+  :root {
+    color-scheme: light;
+
+    --bg-surface-0: #FAF9F5;
+    --bg-surface-1: #FFFFFF;
+    --bg-surface-2: #F3F2EB;
+    --bg-surface-3: #EAE8DF;
+
+    --border-subtle: rgba(0, 0, 0, 0.05);
+    --border-default: rgba(0, 0, 0, 0.08);
+    --border-strong: rgba(0, 0, 0, 0.14);
+
+    --text-primary: #18181B;
+    --text-secondary: #52525B;
+    --text-tertiary: #71717A;
+
+    --shadow-glass-sm: 0 2px 10px -2px rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
+    --shadow-glass-md: 0 12px 36px -6px rgba(0, 0, 0, 0.07), 0 4px 12px -2px rgba(0, 0, 0, 0.04);
+  }
+
+  /* Optional Dark Mode Theme Tokens */
+  .dark {
+    color-scheme: dark;
+
+    --bg-surface-0: #080A10;
+    --bg-surface-1: #0F121C;
+    --bg-surface-2: #161A28;
+    --bg-surface-3: #1E2336;
+
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --border-default: rgba(255, 255, 255, 0.10);
+    --border-strong: rgba(255, 255, 255, 0.16);
+
+    --text-primary: #F4F4F6;
+    --text-secondary: rgba(244, 244, 246, 0.64);
+    --text-tertiary: rgba(244, 244, 246, 0.40);
+
+    --shadow-glass-sm: 0 2px 8px -2px rgba(0, 0, 0, 0.5), inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
+    --shadow-glass-md: 0 8px 32px -4px rgba(0, 0, 0, 0.6), inset 0 1px 1px 0 rgba(255, 255, 255, 0.12);
+  }
+
+  body {
+    background-color: var(--bg-surface-0);
+    color: var(--text-primary);
+    @apply font-sans antialiased selection:bg-accent-violet selection:text-white transition-colors duration-300;
+    min-height: 100vh;
+    position: relative;
+  }
+
+  /* Subtle Noise Texture Overlay */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.025;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(120, 120, 128, 0.2);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(120, 120, 128, 0.35);
+}
+
+/* Soothing Aurora Backgrounds for Light & Dark Modes */
+.aurora-bg {
+  background:
+    radial-gradient(ellipse 80% 50% at 15% -10%, rgba(99, 91, 255, 0.08), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 90% 0%, rgba(14, 165, 233, 0.07), transparent 60%),
+    var(--bg-surface-0);
+}
+
+.dark .aurora-bg {
+  background:
+    radial-gradient(ellipse 80% 50% at 15% -10%, rgba(139, 124, 248, 0.18), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 90% 0%, rgba(34, 211, 238, 0.12), transparent 60%),
+    #080A10;
+}
+
+/* Glass Panel Utility */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.dark .glass-panel {
+  background: rgba(22, 26, 40, 0.75);
+  backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-panel-hover {
+  @apply hover:border-black/15 dark:hover:border-white/15 transition-all duration-200;
+}
+
+/* Spotlight Surface */
+.spotlight-surface {
+  position: relative;
+  --x: 50%;
+  --y: 50%;
+}
+
+.spotlight-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(600px circle at var(--x) var(--y), rgba(99, 91, 255, 0.06), transparent 40%);
+  transition: opacity 0.3s;
+}
+
+.dark .spotlight-surface::before {
+  background: radial-gradient(600px circle at var(--x) var(--y), rgba(139, 124, 248, 0.12), transparent 40%);
+}
+
+/* Accessible Focus Ring Utility */
+.focus-ring {
+  @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-violet focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0;
+}
+
+/* Prefers-Reduced-Motion Fallbacks */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
