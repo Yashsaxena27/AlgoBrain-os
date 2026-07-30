@@ -47,15 +47,21 @@ export default {
         'glow-violet': '0 0 24px -4px rgba(99, 91, 255, 0.25)',
         'glow-cyan': '0 0 24px -4px rgba(14, 165, 233, 0.25)',
         'glow-emerald': '0 0 24px -4px rgba(16, 185, 129, 0.25)',
+        'glow-rose': '0 0 24px -4px rgba(244, 63, 94, 0.28)',
       },
       animation: {
         'shimmer': 'shimmer 2s infinite linear',
         'orb-pulse': 'orbPulse 3s infinite ease-in-out',
+        'fade-in': 'fadeIn 160ms ease-out',
       },
       keyframes: {
         shimmer: {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
+        },
+        fadeIn: {
+          '0%': { opacity: '0', transform: 'translateY(6px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         orbPulse: {
           '0%, 100%': { transform: 'scale(1)', opacity: '0.95' },

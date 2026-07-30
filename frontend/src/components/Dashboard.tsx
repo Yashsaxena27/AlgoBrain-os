@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { mockRevisionQueue, mockCompanyReadiness } from '../mockData';
 import { 
@@ -39,14 +39,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ onTabChange }) => {
   // GitHub contribution calendar mock
   const weeks = 26;
   const daysPerWeek = 7;
-  const contributionGrid = Array.from({ length: weeks * daysPerWeek }, () => {
-    const rand = Math.random();
-    if (rand < 0.35) return 0;
-    if (rand < 0.65) return 1;
-    if (rand < 0.85) return 2;
-    if (rand < 0.95) return 3;
-    return 4;
-  });
+  const contributionGrid = useMemo(() => {
+    return Array.from({ length: weeks * daysPerWeek }, () => {
+      const rand = Math.random();
+      if (rand < 0.35) return 0;
+      if (rand < 0.65) return 1;
+      if (rand < 0.85) return 2;
+      if (rand < 0.95) return 3;
+      return 4;
+    });
+  }, [weeks, daysPerWeek]);
 
   const getContributionColor = (level: number) => {
     switch (level) {
@@ -221,7 +223,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onTabChange }) => {
           <Card hoverEffect className="p-4 flex flex-col justify-between">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[10px] font-bold uppercase tracking-wider text-text-tertiary">GitHub Activity</span>
-              <GitBranch className="w-4 h-4 text-accent-purple" />
+              <GitBranch className="w-4 h-4 text-accent-violet" />
             </div>
             <div>
               <div className="text-2xl font-mono font-bold text-text-primary">{githubActivity}%</div>

@@ -8,6 +8,7 @@ import { Button } from './ui/Button';
 
 export const TopicGraph: React.FC = () => {
   const [selectedTopic, setSelectedTopic] = useState<TopicNode | null>(mockTopics[0]);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   // Color mapping based on mastery scores
   const getLevelColor = (level: string) => {
@@ -92,6 +93,15 @@ export const TopicGraph: React.FC = () => {
                 transform={`translate(${topic.x}, ${topic.y})`}
                 className="cursor-pointer group"
                 onClick={() => setSelectedTopic(topic)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    setSelectedTopic(topic);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+                aria-label={`Select topic ${topic.name}`}
               >
                 <circle
                   r={radius}
@@ -188,7 +198,10 @@ export const TopicGraph: React.FC = () => {
                   size="sm"
                   leftIcon={<ShieldCheck className="w-4 h-4 text-accent-violet" />}
                   className="w-full"
-                  onClick={() => alert(`Starting topic review challenge for ${selectedTopic.name}`)}
+                  onClick={() => {
+                    setActionMessage(`Review challenge queued for ${selectedTopic.name}.`);
+                    setTimeout(() => setActionMessage(null), 2500);
+                  }}
                 >
                   Launch Quick Review (FSRS)
                 </Button>
@@ -197,6 +210,15 @@ export const TopicGraph: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {actionMessage && (
+        <div
+          aria-live="polite"
+          className="absolute bottom-6 left-6 z-20 max-w-xs bg-surface-1/95 border border-border-strong rounded-xl px-3 py-2 text-xs text-text-primary shadow-glass-sm"
+        >
+          {actionMessage}
+        </div>
+      )}
     </div>
   );
 };

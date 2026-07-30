@@ -1,11 +1,23 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, AlertCircle, Terminal, HelpCircle, ArrowRight, Check, Copy, Clock, History, FileCode } from 'lucide-react';
-import { mockAttempts } from '../mockData';
+import { mockAttempts, mockProblems } from '../mockData';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { Card } from './ui/Card';
 import { Skeleton } from './ui/Skeleton';
+
+interface AnalysisResult {
+  title: string;
+  detectedDifficulty: 'Easy' | 'Medium' | 'Hard';
+  detectedTags: string[];
+  correctness: 'Accepted' | 'Wrong Answer';
+  mistakeType: string;
+  complexityEstimated: string;
+  complexityActual: string;
+  critique: string;
+  revisionIn: string;
+}
 
 export const ProblemCapture: React.FC = () => {
   const [url, setUrl] = useState('');
@@ -14,12 +26,19 @@ export const ProblemCapture: React.FC = () => {
   const [difficulty, setDifficulty] = useState<'Easy' | 'Medium' | 'Hard'>('Medium');
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<'idle' | 'analyzing' | 'done'>('idle');
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
   const [copied, setCopied] = useState(false);
+  const [formMessage, setFormMessage] = useState<string | null>(null);
 
   const handleAnalyze = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!url || !code) return;
+    if (!url.trim() || !code.trim()) {
+      setFormMessage('Please provide both problem URL and solution code before running diagnosis.');
+      setStep('idle');
+      return;
+    }
+
+    setFormMessage(null);
 
     setLoading(true);
     setStep('analyzing');
@@ -27,11 +46,12 @@ export const ProblemCapture: React.FC = () => {
     // Simulate dual-stage AI analysis pipeline
     setTimeout(() => {
       const isCorrect = !code.includes('Missing duplicate checks');
-      const simulatedCritique = {
+      const correctness: AnalysisResult['correctness'] = isCorrect ? 'Accepted' : 'Wrong Answer';
+      const simulatedCritique: AnalysisResult = {
         title: url.split('/problems/')[1]?.split('/')[0]?.replace(/-/g, ' ') || 'Custom Problem Attempt',
         detectedDifficulty: difficulty,
         detectedTags: ['Arrays', 'Two Pointers'],
-        correctness: isCorrect ? 'Accepted' : 'Wrong Answer',
+        correctness,
         mistakeType: isCorrect ? 'None' : 'Duplicate Handling / Off-by-one',
         complexityEstimated: 'O(N^2)',
         complexityActual: 'O(N^2)',
@@ -44,6 +64,7 @@ export const ProblemCapture: React.FC = () => {
       setResult(simulatedCritique);
       setLoading(false);
       setStep('done');
+      setFormMessage(null);
     }, 2500);
   };
 
@@ -53,6 +74,7 @@ export const ProblemCapture: React.FC = () => {
     setNotes('');
     setStep('idle');
     setResult(null);
+    setFormMessage(null);
   };
 
   const loadExample = () => {
@@ -65,10 +87,22 @@ export const ProblemCapture: React.FC = () => {
 
   const copyCritique = () => {
     if (result) {
-      navigator.clipboard.writeText(result.critique);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      navigator.clipboard.writeText(result.critique).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }).catch(() => {
+        setFormMessage('Could not copy critique to clipboard. Please copy it manually.');
+      });
     }
+  };
+
+  const getAttemptUrl = (attemptProblemId: string, fallbackSlug: string) => {
+    const matchingProblem = mockProblems.find(problem => problem.id === attemptProblemId);
+    if (matchingProblem) {
+      return `https://leetcode.com/problems/${matchingProblem.leetcodeSlug}`;
+    }
+
+    return `https://leetcode.com/problems/${fallbackSlug}`;
   };
 
   return (
@@ -197,6 +231,12 @@ export const ProblemCapture: React.FC = () => {
                 </Button>
               )}
             </div>
+
+            {formMessage && (
+              <div className="bg-accent-amber/10 border border-accent-amber/25 rounded-xl px-3 py-2 text-xs text-accent-amber font-medium">
+                {formMessage}
+              </div>
+            )}
           </form>
         </div>
       </Card>
@@ -339,9 +379,10 @@ export const ProblemCapture: React.FC = () => {
               <div 
                 key={attempt.id}
                 onClick={() => {
-                  setUrl(`https://leetcode.com/problems/3sum`);
+                  setUrl(getAttemptUrl(attempt.problemId, '3sum'));
                   setCode(attempt.code);
                   setNotes(attempt.aiCritique);
+                  setFormMessage(null);
                 }}
                 className="p-2.5 rounded-xl bg-surface-0/40 border border-border-subtle hover:border-border-default transition-all cursor-pointer flex items-center justify-between text-xs"
               >
