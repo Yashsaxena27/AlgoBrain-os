@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowRight, 
@@ -31,6 +31,17 @@ interface Particle {
   color: string;
 }
 
+const KONAMI_CODE = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'] as const;
+const ALGORITHMS = [
+  'Dynamic Programming',
+  'Binary Search Tree',
+  'Graph BFS / DFS',
+  'Sliding Window',
+  'Two Pointers',
+  'Dijkstra Shortest Path'
+] as const;
+type AlgorithmName = (typeof ALGORITHMS)[number];
+
 export const EasterEggLanding: React.FC<EasterEggLandingProps> = ({ onEnterApp }) => {
   // Theme & Mode states
   const [isNightMode, setIsNightMode] = useState(false);
@@ -50,20 +61,52 @@ export const EasterEggLanding: React.FC<EasterEggLandingProps> = ({ onEnterApp }
   // Interactive panda states
   const [panda1Action, setPanda1Action] = useState<'idle' | 'wave' | 'roll' | 'eat' | 'type'>('idle');
   const [panda2Action, setPanda2Action] = useState<'idle' | 'wave' | 'juggle' | 'cheer'>('idle');
-  const [currentAlgo, setCurrentAlgo] = useState('Dynamic Programming');
+  const [currentAlgo, setCurrentAlgo] = useState<AlgorithmName>('Dynamic Programming');
 
   const containerRef = useRef<HTMLDivElement>(null);
   const konamiSeq = useRef<string[]>([]);
-  const konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
 
-  const algorithms = [
-    'Dynamic Programming',
-    'Binary Search Tree',
-    'Graph BFS / DFS',
-    'Sliding Window',
-    'Two Pointers',
-    'Dijkstra Shortest Path'
-  ];
+  const spawnFloatingText = useCallback((x: number, y: number, text: string, color: string) => {
+    const newId = Date.now() + Math.random();
+    setParticles(prev => [...prev.slice(-10), { id: newId, x, y, text, color }]);
+    setTimeout(() => {
+      setParticles(prev => prev.filter(p => p.id !== newId));
+    }, 1200);
+  }, []);
+
+  const handleCatchItem = useCallback((item: FallingItem) => {
+    if (item.type === 'bug') {
+      // Hit bug! Penalty
+      setCombo(0);
+      setScore(prev => Math.max(0, prev - 150));
+      spawnFloatingText(window.innerWidth * (item.x / 100), window.innerHeight / 2 + 50, '-150 Bug! 🐛', '#F43F5E');
+      return;
+    }
+
+    // Good item!
+    const points = item.type === 'star' ? 250 : item.type === 'bamboo' ? 100 : 50;
+    setCombo(currentCombo => currentCombo + 1);
+    const bonus = combo > 3 ? combo * 20 : 0;
+    const totalGain = points + bonus;
+
+    setScore(prev => {
+      const newScore = prev + totalGain;
+      setHighScore(previousHighScore => Math.max(previousHighScore, newScore));
+
+      // Unlock hats on milestones
+      setHat(previousHat => {
+        if (newScore >= 2000 && previousHat === 'ninja') return 'crown';
+        if (newScore >= 1000 && previousHat === 'none') return 'ninja';
+        return previousHat;
+      });
+
+      return newScore;
+    });
+
+    const label = item.type === 'star' ? `⭐ +${totalGain} STAR!` : item.type === 'bamboo' ? `🎋 +${totalGain}` : `+${totalGain}`;
+    const color = item.type === 'star' ? '#8B5CF6' : item.type === 'bamboo' ? '#10B981' : '#3B82F6';
+    spawnFloatingText(window.innerWidth * (item.x / 100), window.innerHeight / 2 + 40, label, color);
+  }, [combo, spawnFloatingText]);
 
   // Konami Code & Keyboard Controls
   useEffect(() => {
@@ -87,9 +130,9 @@ export const EasterEggLanding: React.FC<EasterEggLandingProps> = ({ onEnterApp }
 
       // Konami Code Listener
       konamiSeq.current.push(e.key);
-      if (konamiSeq.current.length > konamiCode.length) konamiSeq.current.shift();
+      if (konamiSeq.current.length > KONAMI_CODE.length) konamiSeq.current.shift();
 
-      if (konamiSeq.current.join(',') === konamiCode.join(',')) {
+      if (konamiSeq.current.join(',') === KONAMI_CODE.join(',')) {
         setHat(prev => (prev === 'sunglasses' ? 'ninja' : 'sunglasses'));
         setKonamiToast(true);
         spawnFloatingText(window.innerWidth / 2, window.innerHeight / 3, 'KONAMI CODE UNLOCKED! 🕶️', '#F59E0B');
@@ -100,7 +143,7 @@ export const EasterEggLanding: React.FC<EasterEggLandingProps> = ({ onEnterApp }
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [gameActive, activeTab]);
+  }, [gameActive, activeTab, spawnFloatingText]);
 
   // Mini-game Loop (Falling items & collision detection)
   useEffect(() => {
@@ -143,45 +186,7 @@ export const EasterEggLanding: React.FC<EasterEggLandingProps> = ({ onEnterApp }
       clearInterval(spawnInterval);
       clearInterval(tickInterval);
     };
-  }, [gameActive, pandaX]);
-
-  const handleCatchItem = (item: FallingItem) => {
-    if (item.type === 'bug') {
-      // Hit bug! Penalty
-      setCombo(0);
-      setScore(prev => Math.max(0, prev - 150));
-      spawnFloatingText(window.innerWidth * (item.x / 100), window.innerHeight / 2 + 50, '-150 Bug! 🐛', '#F43F5E');
-    } else {
-      // Good item!
-      const points = item.type === 'star' ? 250 : item.type === 'bamboo' ? 100 : 50;
-      setCombo(c => c + 1);
-      const bonus = combo > 3 ? combo * 20 : 0;
-      const totalGain = points + bonus;
-
-      setScore(prev => {
-        const newScore = prev + totalGain;
-        if (newScore > highScore) setHighScore(newScore);
-
-        // Unlock hats on milestones
-        if (newScore >= 1000 && hat === 'none') setHat('ninja');
-        if (newScore >= 2000 && hat === 'ninja') setHat('crown');
-
-        return newScore;
-      });
-
-      const label = item.type === 'star' ? `⭐ +${totalGain} STAR!` : item.type === 'bamboo' ? `🎋 +${totalGain}` : `+${totalGain}`;
-      const color = item.type === 'star' ? '#8B5CF6' : item.type === 'bamboo' ? '#10B981' : '#3B82F6';
-      spawnFloatingText(window.innerWidth * (item.x / 100), window.innerHeight / 2 + 40, label, color);
-    }
-  };
-
-  const spawnFloatingText = (x: number, y: number, text: string, color: string) => {
-    const newId = Date.now() + Math.random();
-    setParticles(prev => [...prev.slice(-10), { id: newId, x, y, text, color }]);
-    setTimeout(() => {
-      setParticles(prev => prev.filter(p => p.id !== newId));
-    }, 1200);
-  };
+  }, [gameActive, pandaX, handleCatchItem]);
 
   const startGame = () => {
     setScore(0);
@@ -199,10 +204,10 @@ export const EasterEggLanding: React.FC<EasterEggLandingProps> = ({ onEnterApp }
 
   // Cycle algorithms on laptop click
   const cycleAlgorithm = () => {
-    const nextIdx = (algorithms.indexOf(currentAlgo) + 1) % algorithms.length;
-    setCurrentAlgo(algorithms[nextIdx]);
+    const nextIdx = (ALGORITHMS.indexOf(currentAlgo) + 1) % ALGORITHMS.length;
+    setCurrentAlgo(ALGORITHMS[nextIdx]);
     setPanda1Action('type');
-    spawnFloatingText(window.innerWidth / 2 - 100, window.innerHeight / 2 - 80, `Algorithm: ${algorithms[nextIdx]} 💻`, '#3B82F6');
+    spawnFloatingText(window.innerWidth / 2 - 100, window.innerHeight / 2 - 80, `Algorithm: ${ALGORITHMS[nextIdx]} 💻`, '#3B82F6');
     setTimeout(() => setPanda1Action('idle'), 1000);
   };
 

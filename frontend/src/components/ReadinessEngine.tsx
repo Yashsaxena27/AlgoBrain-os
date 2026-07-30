@@ -9,6 +9,7 @@ import { Button } from './ui/Button';
 
 export const ReadinessEngine: React.FC = () => {
   const [selectedCompany, setSelectedCompany] = useState<CompanyReadiness>(mockCompanyReadiness[0]);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   // Section 6.6 Narrative framing helper
   const getNarrativeStatus = (key: string, val: number, companyName: string) => {
@@ -173,7 +174,10 @@ export const ReadinessEngine: React.FC = () => {
                   variant="primary"
                   size="md"
                   rightIcon={<ArrowRight className="w-4 h-4" />}
-                  onClick={() => alert(`Starting company assessment loop for ${selectedCompany.name}`)}
+                  onClick={() => {
+                    setActionMessage(`Assessment loop started for ${selectedCompany.name}.`);
+                    setTimeout(() => setActionMessage(null), 2500);
+                  }}
                 >
                   Run Hiring Simulation
                 </Button>
@@ -186,6 +190,15 @@ export const ReadinessEngine: React.FC = () => {
           )}
         </AnimatePresence>
       </Card>
+
+      {actionMessage && (
+        <div
+          aria-live="polite"
+          className="lg:col-span-12 bg-surface-1 border border-border-strong rounded-xl px-3 py-2 text-xs text-text-primary shadow-glass-sm"
+        >
+          {actionMessage}
+        </div>
+      )}
     </div>
   );
 };

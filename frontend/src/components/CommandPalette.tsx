@@ -9,7 +9,8 @@ import {
   ShieldAlert, 
   Target, 
   Users,
-  Code2 
+  Code2,
+  Compass
 } from 'lucide-react';
 import { mockTopics } from '../mockData';
 
@@ -25,15 +26,22 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   onSelectTab,
 }) => {
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        if (isOpen) onClose();
-        else {
-          // Trigger open
-        }
+    if (!isOpen) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+      }
+
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        onClose();
       }
     };
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
@@ -49,6 +57,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     <div 
       className="fixed inset-0 z-50 bg-surface-0/80 backdrop-blur-md flex items-start justify-center pt-20 px-4"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Command palette"
     >
       <div 
         className="w-full max-w-xl bg-surface-3 border border-border-strong rounded-2xl shadow-glass-md overflow-hidden animate-fade-in font-sans"
@@ -59,12 +70,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             <Search className="w-4 h-4 text-text-tertiary" />
             <Command.Input
               autoFocus
+              aria-label="Search commands"
               placeholder="Type a command or search topic (e.g. Graphs, Revision)..."
               className="w-full bg-transparent text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none font-sans"
             />
             <button 
               onClick={onClose}
               className="p-1 rounded-lg hover:bg-white/10 text-text-tertiary text-xs"
+              type="button"
             >
               <kbd className="font-mono bg-white/5 border border-white/10 px-1.5 py-0.5 rounded">ESC</kbd>
             </button>
@@ -151,6 +164,17 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                   <span>Peer & Charts</span>
                 </div>
                 <span className="text-[10px] font-mono text-text-tertiary">⌘7</span>
+              </Command.Item>
+
+              <Command.Item
+                onSelect={() => navigateTo('future')}
+                className="flex items-center justify-between px-3 py-2.5 rounded-xl text-xs text-text-secondary hover:text-text-primary hover:bg-surface-2 cursor-pointer font-medium"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Compass className="w-4 h-4 text-accent-violet" />
+                  <span>Future Plans</span>
+                </div>
+                <span className="text-[10px] font-mono text-text-tertiary">⌘8</span>
               </Command.Item>
             </Command.Group>
 

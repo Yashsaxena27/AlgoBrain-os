@@ -1,17 +1,7 @@
-import { useState, useEffect } from 'react';
+import { lazy, Suspense, useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Scorecard } from './components/Scorecard';
-import { Dashboard } from './components/Dashboard';
-import { ProblemCapture } from './components/ProblemCapture';
-import { TopicGraph } from './components/TopicGraph';
-import { RevisionQueue } from './components/RevisionQueue';
-import { MistakeRadar } from './components/MistakeRadar';
-import { ReadinessEngine } from './components/ReadinessEngine';
-import { PeerAnalytics } from './components/PeerAnalytics';
-import { FuturePlans } from './components/FuturePlans';
-import { AICoachOrb } from './components/AICoachOrb';
-import { CommandPalette } from './components/CommandPalette';
-import { EasterEggLanding } from './components/EasterEggLanding';
+import { Card } from './components/ui/Card';
 
 import { 
   BrainCircuit, 
@@ -32,8 +22,29 @@ import {
   Moon
 } from 'lucide-react';
 
+const Dashboard = lazy(() => import('./components/Dashboard').then(module => ({ default: module.Dashboard })));
+const ProblemCapture = lazy(() => import('./components/ProblemCapture').then(module => ({ default: module.ProblemCapture })));
+const TopicGraph = lazy(() => import('./components/TopicGraph').then(module => ({ default: module.TopicGraph })));
+const RevisionQueue = lazy(() => import('./components/RevisionQueue').then(module => ({ default: module.RevisionQueue })));
+const MistakeRadar = lazy(() => import('./components/MistakeRadar').then(module => ({ default: module.MistakeRadar })));
+const ReadinessEngine = lazy(() => import('./components/ReadinessEngine').then(module => ({ default: module.ReadinessEngine })));
+const PeerAnalytics = lazy(() => import('./components/PeerAnalytics').then(module => ({ default: module.PeerAnalytics })));
+const FuturePlans = lazy(() => import('./components/FuturePlans').then(module => ({ default: module.FuturePlans })));
+const AICoachOrb = lazy(() => import('./components/AICoachOrb').then(module => ({ default: module.AICoachOrb })));
+const CommandPalette = lazy(() => import('./components/CommandPalette').then(module => ({ default: module.CommandPalette })));
+const EasterEggLanding = lazy(() => import('./components/EasterEggLanding').then(module => ({ default: module.EasterEggLanding })));
+
+const THEME_STORAGE_KEY = 'algobrain-theme';
+
 function App() {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const persistedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+    if (persistedTheme === 'light' || persistedTheme === 'dark') {
+      return persistedTheme;
+    }
+
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
   const [showLanding, setShowLanding] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -46,6 +57,7 @@ function App() {
     } else {
       document.documentElement.classList.remove('dark');
     }
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
 
   // Keyboard navigation support for accessibility & UX speed (⌘1–⌘8, ⌘K)
@@ -71,7 +83,7 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const menuItems = [
+  const menuItems = useMemo(() => [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" />, hotkey: '⌘1' },
     { id: 'capture', label: 'Problem Capture', icon: <Terminal className="w-4 h-4" />, hotkey: '⌘2' },
     { id: 'graph', label: 'Topic Graph', icon: <Network className="w-4 h-4" />, hotkey: '⌘3' },
@@ -80,7 +92,7 @@ function App() {
     { id: 'readiness', label: 'Readiness Engine', icon: <Target className="w-4 h-4" />, hotkey: '⌘6' },
     { id: 'analytics', label: 'Peer & Charts', icon: <Users className="w-4 h-4 text-accent-cyan" />, hotkey: '⌘7' },
     { id: 'future', label: 'Future Plans', icon: <Compass className="w-4 h-4 text-accent-violet" />, hotkey: '⌘8' },
-  ];
+  ], []);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -109,23 +121,31 @@ function App() {
 
   // Render Easter Egg Landing Page if active
   if (showLanding) {
-    return <EasterEggLanding onEnterApp={() => setShowLanding(false)} />;
+    return (
+      <Suspense fallback={<AppShellFallback />}>
+        <EasterEggLanding onEnterApp={() => setShowLanding(false)} />
+      </Suspense>
+    );
   }
 
   return (
     <div className="min-h-screen flex bg-surface-0 text-text-primary selection:bg-accent-violet selection:text-white transition-colors duration-300">
       {/* Command Palette Modal */}
-      <CommandPalette 
-        isOpen={commandPaletteOpen} 
-        onClose={() => setCommandPaletteOpen(false)} 
-        onSelectTab={(tab) => {
-          setShowLanding(false);
-          setActiveTab(tab);
-        }} 
-      />
+      <Suspense fallback={null}>
+        <CommandPalette 
+          isOpen={commandPaletteOpen} 
+          onClose={() => setCommandPaletteOpen(false)} 
+          onSelectTab={(tab) => {
+            setShowLanding(false);
+            setActiveTab(tab);
+          }} 
+        />
+      </Suspense>
 
       {/* Persistent Docked AI Coach Orb */}
-      <AICoachOrb onAction={() => setActiveTab('revision')} />
+      <Suspense fallback={null}>
+        <AICoachOrb onAction={() => setActiveTab('revision')} />
+      </Suspense>
 
       {/* Sidebar - Desktop */}
       <aside className="hidden lg:flex flex-col w-64 bg-surface-1/90 border-r border-border-default backdrop-blur-2xl shrink-0 p-5 space-y-6 justify-between select-none">
@@ -401,12 +421,31 @@ function App() {
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
               >
-                {renderContent()}
+                <Suspense fallback={<AppContentFallback />}>
+                  {renderContent()}
+                </Suspense>
               </motion.div>
             </AnimatePresence>
           </div>
         </main>
       </div>
+    </div>
+  );
+}
+
+function AppShellFallback() {
+  return (
+    <div className="min-h-screen bg-surface-0 p-6 lg:p-8">
+      <Card className="h-[40vh] animate-pulse bg-surface-1 border-border-default" />
+    </div>
+  );
+}
+
+function AppContentFallback() {
+  return (
+    <div className="space-y-4 animate-pulse">
+      <Card className="h-24 bg-surface-1 border-border-default" />
+      <Card className="h-64 bg-surface-1 border-border-default" />
     </div>
   );
 }

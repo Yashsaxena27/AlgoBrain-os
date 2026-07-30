@@ -16,6 +16,8 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   };
 
   return (
-    <div className={`shimmer-bg bg-surface/50 border border-white/5 ${variantStyles[variant]} ${className}`} />
+    <div
+      className={`bg-gradient-to-r from-surface-2 via-surface-1 to-surface-2 bg-[length:200%_100%] animate-shimmer border border-border-subtle ${variantStyles[variant]} ${className}`}
+    />
   );
 };
